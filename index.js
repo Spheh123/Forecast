@@ -11,25 +11,22 @@ function displayTemperature(response) {
   let descriptionElement = document.querySelector("#description");
   descriptionElement.innerHTML = response.data.condition.description;
 
-  // Update humidity (with %)
+  // Update humidity
   let humidityElement = document.querySelector("#humidity");
-  humidityElement.innerHTML = `${response.data.temperature.humidity}%`;
+  humidityElement.innerHTML = response.data.temperature.humidity;
 
-  // Update wind speed (with km/h)
+  // Update wind speed (convert m/s to km/h)
   let windSpeedElement = document.querySelector("#wind-speed");
-  windSpeedElement.innerHTML = `${Math.round(response.data.wind.speed)} km/h`;
+  windSpeedElement.innerHTML = Math.round(response.data.wind.speed * 3.6);
 
-  // Update time (browser's local time)
+  // Update time
   let timeElement = document.querySelector("#time");
-  let now = new Date();
-
+  let now = new Date(response.data.time * 1000);
   let hours = now.getHours();
   let minutes = now.getMinutes();
-
   if (minutes < 10) {
     minutes = `0${minutes}`;
   }
-
   let days = [
     "Sunday",
     "Monday",
@@ -39,22 +36,38 @@ function displayTemperature(response) {
     "Friday",
     "Saturday",
   ];
-  let dayName = days[now.getDay()];
+  let day = days[now.getDay()];
+  timeElement.innerHTML = `${day} ${hours}:${minutes}`;
 
-  timeElement.innerHTML = `${dayName} ${hours}:${minutes}`;
+  // Update weather icon (replaces the emoji)
+  let iconElement = document.querySelector(".weather-app-icon");
+  iconElement.innerHTML = `<img src="${response.data.condition.icon_url}" alt="${response.data.condition.description}" width="64">`;
 }
 
 function searchCity(city) {
-  let apiKey = "b2a5adcct04b33178913oc335f405433";
+  let apiKey = "34a94d7b8cafc001064ocd5a14ctbaf4";
   let apiUrl = `https://api.shecodes.io/weather/v1/current?query=${city}&key=${apiKey}&units=metric`;
 
-  axios.get(apiUrl).then(displayTemperature);
+  // Show loading state
+  let temperatureElement = document.querySelector("#temperature");
+  temperatureElement.innerHTML = "...";
+
+  axios
+    .get(apiUrl)
+    .then(displayTemperature)
+    .catch((error) => {
+      console.error("Error fetching weather:", error);
+      alert("City not found. Please try another location.");
+      temperatureElement.innerHTML = "---";
+    });
 }
 
 function handleSearchSubmit(event) {
   event.preventDefault();
   let searchInput = document.querySelector("#search-form-input");
-  searchCity(searchInput.value);
+  if (searchInput.value.trim().length > 0) {
+    searchCity(searchInput.value);
+  }
 }
 
 // Initialize with default city
